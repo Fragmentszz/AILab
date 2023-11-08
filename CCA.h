@@ -11,6 +11,7 @@ public:
 
 	friend class CCA;
 };
+
 class CCA
 {
 protected:
@@ -25,10 +26,13 @@ protected:
 	std::vector<int> trainY,testY;
 	std::vector<std::set<int>> cato_train;
 	std::vector<std::vector<Cover>> Covers;
+	int classify(ANS data);
 public:
 	CCA(int _dim,int _catoNum,ld _R);
+	int predict(ANS X);
 	void setTrain(std::vector<ANS>& traindata);
 	void setTest(std::vector<ANS>& testdata);
 	void train();
-	void test();
+	double test();
+	friend class VCCA;
 };

@@ -2,4 +2,4 @@
 #include"WriteIn.h"
 #include"ANS.h"
 
-void ReadData(std::string SetName, vector<ANS>& data);
+void ReadData(std::string SetName, vector<ANS>& data, int& dim,int& catoNum);

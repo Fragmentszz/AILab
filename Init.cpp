@@ -1,6 +1,6 @@
 #include"Init.h"
 #include"ANS.h"
-void ReadData(std::string SetName,vector<ANS>& data)
+void ReadData(std::string SetName,vector<ANS>& data,int& dim,int& catoNum)
 {
 	data.clear();
 	string filepath = "./DataSets/toone/" + SetName + ".xlsx";
@@ -10,7 +10,9 @@ void ReadData(std::string SetName,vector<ANS>& data)
 	auto wkbook = doc.workbook();
 	auto sheet = wkbook.worksheet("Sheet1");
 	int m = sheet.columnCount(), n = sheet.rowCount();
+	std::set<int> st;
 	cout << n << " " << m << endl;
+	dim = m - 2;
 	for (int i = 2; i <= n; i++)
 	{
 		ANS nowv(m-1);
@@ -32,10 +34,12 @@ void ReadData(std::string SetName,vector<ANS>& data)
 			nowv[j - 2] = (ld)t;
 		}
 		data.push_back(nowv);
+		st.insert(round(nowv[m - 2]));
 	}
 	int cnt = 0;
 	for (auto v : data)
 	{
 		cout << ++cnt << " "; v.print();
 	}
+	catoNum = st.size();
 }

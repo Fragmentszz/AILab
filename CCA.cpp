@@ -67,7 +67,6 @@ CCA::CCA(int _dim, int _catoNum,ld _R) :dim(_dim), catoNum(_catoNum), trainNum(0
 
 void CCA::train()
 {
-	srand(time(0));
 	int cnt = 0;
 	while (1)
 	{
@@ -83,69 +82,111 @@ void CCA::train()
 		}
 		if (empty)	break;
 		int nowcato = nempty[randi(0, nempty.size() - 1)];
-		if (0)							//只有一类
+		ld mindot = INFINITY;
+		ld maxdot = -INFINITY;
+		int nowcenterid = randi(0, cato_train[nowcato].size() - 1);
+		auto ite = cato_train[nowcato].begin();
+		for (; nowcenterid > 0; nowcenterid--)	ite++;
+		int nowcenter = *ite;
+		for (int other : nempty)
 		{
-
+			if (other == nowcato) {
+				continue;
+			}
+			for (int othercenter : cato_train[other])
+			{
+				maxdot = max(maxdot, trainX[nowcenter] * trainX[othercenter]);
+			}
 		}
-		else
+		std::vector<int> removed;
+		for (int same : cato_train[nowcato])
 		{
-			int nowcenterid = randi(0, cato_train[nowcato].size() - 1);
-			
-			auto ite = cato_train[nowcato].begin();
-			for (; nowcenterid > 0; nowcenterid--)	ite++;
-			int nowcenter = *ite;
-			ld mindot = trainX[nowcenter] * trainX[nowcenter];
-			ld maxdot = -INFINITY;
-			for (int other : nempty)
+			ld dis = trainX[same] * trainX[nowcenter];
+			if (dis >= maxdot)
 			{
-				if (other == nowcato) {
-					continue;
-				}
-				for (int othercenter : cato_train[other])
-				{
-					maxdot = max(maxdot, trainX[nowcenter] * trainX[othercenter]);
-				}
+				mindot = min(dis, mindot);
+				removed.push_back(same);
+				ntrain--;
 			}
-			//ntrain--;
-			//if (maxdot - mindot > 0)	cout << maxdot << " ???  " << mindot << endl;
-			std::vector<int> removed;
-			for (int same : cato_train[nowcato])
-			{
-				ld dis = trainX[same] * trainX[nowcenter];
-				if (dis >= maxdot)
-				{
-					mindot = min(dis, mindot);
-					removed.push_back(same);
-					ntrain--;
-				}
-			}
-			if (maxdot < -(trainX[nowcenter]*trainX[nowcenter]))		//没有其他类别
-			{
-				maxdot = mindot *0.5;									//此处可改,当没有其他类别时，距离的最大范围
-			}
-			if (mindot <= maxdot)	cout << mindot << " " << maxdot << endl;
-			ld r = 0.5 * (maxdot + mindot);
-			Cover newcover = Cover(trainX[nowcenter],r);
-			Covers[nowcato].push_back(newcover);
-			for (int t : removed)
-			{
-				cato_train[nowcato].erase(t);
-			}
-			std::cout << nowcato << " " << r << " ";
-			trainX[nowcenter].print();
-			cnt++;
-			int numsum = 0;
-			for (auto z : cato_train)
-			{
-				numsum += z.size();
-			}
-			//cout << numsum << endl;
 		}
+		if (maxdot < -(trainX[nowcenter] * trainX[nowcenter] - 2))		//没有其他类别
+		{
+			maxdot = mindot;									//此处可改,当没有其他类别时，距离的最大范围
+		}
+		ld r = 0.5*(mindot + maxdot);
+		Cover newcover = Cover(trainX[nowcenter], r);
+		Covers[nowcato].push_back(newcover);
+		for (int t : removed)
+		{
+			cato_train[nowcato].erase(t);
+		}
+		//cnt++;
 	}
-	std::cout << "共产生" << cnt << "个cover" << std::endl;
+	//std::cout << "共产生" << cnt << "个cover" << std::endl;
 }
 
-void CCA::test()
-{
 
+int CCA::classify(ANS data)
+{
+	if (data.dim != dim + 1)
+	{
+		using namespace std;
+		printf("输入模型的向量长度有误\n");
+		return -1;
+	}
+	ld mindis = INFINITY;
+	ld maxdis = -INFINITY;
+	int res = 0;
+	int res2 = 0;
+	for (int i=1;i<=catoNum;i++)
+	{
+		for (auto cover : Covers[i])
+		{
+			if (cover.center * data >= cover.radis)
+			{
+				if (maxdis < cover.center * data)
+				{
+					maxdis = cover.center * data;
+					res2 = i;
+				}
+			}
+			else if (fabs(cover.center * data - cover.radis) < mindis)
+			{
+				mindis = fabs(cover.center * data - cover.radis);
+				res = i;
+			}
+		}
+	}
+	if (res2)	return res2;
+
+	return res;
+}
+int CCA::predict(ANS X)
+{
+	if (X.dim != dim)
+	{
+		using namespace std;
+		printf("输入模型的向量长度有误\n");
+		return -1;
+	}
+	ANS data(dim + 1);
+	ld dot = 0;
+	for (int i = 0; i < dim; i++)
+	{
+		data[i] = X[i];
+		dot += X[i] * X[i];
+	}
+	data[dim] = sqrtl(maxR * maxR - dot * dot);
+	return classify(data);
+}
+double CCA::test()
+{
+	int right = 0, wrong = 0;
+	for (int i = 0; i < testX.size(); i++)
+	{
+		int res = classify(testX[i]);
+		if (res == testY[i])	right++;
+		else wrong++;
+	}
+	return 1.0 * right / (right + wrong);
 }

@@ -2,5 +2,6 @@
 #include<random>
 int randi(int l, int r)
 {
-	return (int)((1.0 * rand() / RAND_MAX) * (r - l + 1)) + l;
+	int res = (int)((1.0 * rand() / (RAND_MAX+ 1)) * (r - l + 1)) + l;
+	return res;
 }
