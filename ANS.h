@@ -1,6 +1,6 @@
 #pragma once
 #include"df.h"
-
+#define delta 1e-6
 class ANS
 {
 public:
@@ -18,15 +18,18 @@ public:
 	ANS& operator=(const ANS&);
 	ANS operator+(const ANS&);
 	ANS operator-(const ANS& b);
+	ld norm2();
 	bool operator<(const ANS& b);
 	bool operator>(const ANS& b);
 	bool operator<=(const ANS& b);
 	bool operator>=(const ANS& b);
 	bool operator!=(const ANS& b);
+	ld operator*(const ANS& b);
 	ld& operator[](int index);
+	ld operator[](int index) const;
 	friend ld dis(ANS&, ANS&);
 	void print() const;
-	
+
 };
 
 typedef ld(*SearchFunc)(const ANS&);
@@ -38,8 +41,11 @@ typedef ld(*SearchFunc)(const ANS&);
 /// @param b 
 /// @return 距离
 ld dis(ANS& a, ANS& b);
+
 ANS abs(ANS a);
 
-
-
-
+/// @brief 求梯度数值解法
+/// @param target 目标函数
+/// @param x 当前向量X
+/// @return 梯度
+ANS derivative(SearchFunc target, ANS& x);
